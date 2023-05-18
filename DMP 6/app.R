@@ -1,0 +1,145 @@
+library(shiny)
+library(shinydashboard)
+library(htmltools)
+library(shinyWidgets)
+library(ggplot2)
+
+# Define UI for the application
+ui <- dashboardPage(
+  dashboardHeader(title = "At-Risk Project"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Home", tabName = "home", icon = icon("home")),
+      menuItem("Day 1 Data Summary", tabName = "day1", icon = icon("calendar")),
+      menuItem("Day 2 DataSummary", tabName = "day2", icon = icon("calendar")),
+      menuItem("Day 3 Data Summary", tabName = "day3", icon = icon("calendar")),
+      menuItem("Day 4 Data Summary", tabName = "day4", icon = icon("calendar")),
+      menuItem("Day 5 Data Summary", tabName = "day5", icon = icon("calendar"))
+    ),
+    
+    sidebarMenuOutput("Summary Stats")
+  ),
+  dashboardBody(
+    tags$img(src="https://www.rotman-baycrest.on.ca/sp/wp-content/uploads/2017/03/rotman_0-600x300.png", style="position:absolute; top:50px; right:10px; width:300px; height:150px;"),
+    tags$img(src=" https://static.wixstatic.com/media/9a8224_27888956597d4c46a04a95462cb87be0~mv2.png/v1/fill/w_600,h_114,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/9a8224_27888956597d4c46a04a95462cb87be0~mv2.png", style="position:absolute; top:200px; right:20px; width:300px; height:70px;"), 
+    
+    tabItems(
+      tabItem(tabName = "home",
+              fluidRow(
+                box(
+                  title = "Data collected:",
+                  status = "primary",
+                  solidHeader = TRUE,
+                  plotOutput("sidebar_plot", height = "250px", width = "470")
+                )
+              ),
+              fluidRow(
+                box(
+                  title = "Accurate as of: ",
+                  status = "primary",
+                  solidHeader = TRUE,
+                  tags$p(id = "date", style = "font-size: 20px;"),
+                  tags$p(id = "date", style = "font-size: 16px;", "5/10/23")
+                )
+              )
+      ),
+      tabItem(tabName = "day1",
+              selectInput("Data_1", "Data", choices = list("fMRI" = list("Structural Brain Scan"), "DTI" = list("Structural Brain Scan?"))),
+              selectInput("People_1", "People (2)", choices = c("Xuan", "Negar")),
+              selectInput("Participants_1", "Participating Cohort (3)", choices = c("Cohort 1", "Cohort 2","Cohort 3")),
+              selectInput("Raw Data Location_1", "Data Location", 
+                          choices = list("Rotman Servers" = list(" /data8/olsen_lab/AtRiskFollowup on gateway/grid (172.24.4.65)
+", "/3volatile/olsen_lab/rolsen/AtRiskFollowup on VN1 (172.24.3.121)"),"Screening Form Location" = list("Dropbox"))),
+              
+              
+              h4("Data Collection Progress:"),
+              div(class = "custom-progress-bar",
+                  progressBar(id = "progress_1", value = 100, total = 100, display_pct = TRUE)
+              ),
+              
+              
+      ), 
+      tabItem(tabName = "day2",
+              selectInput("Data_1", "Data", choices = list("fMRI" = list("Fribbles"))),
+              selectInput("People_2", "People (3)", choices = c("Xuan", "Natalia", "Morgan")),
+              selectInput("Participants_2", "Participating Cohort (2)", choices = c("Cohort 2","Cohort 3")),
+              selectInput("Location_2", "Data Location", 
+                          choices = list("Rotman Servers" = list(" /data8/olsen_lab/AtRiskFollowup on gateway/grid (172.24.4.65)
+", "/3volatile/olsen_lab/rolsen/AtRiskFollowup on VN1 (172.24.3.121)"),"Screening Form Location" = list("Dropbox"))),
+              h4("Data Collection Progress:"),
+              div(class = "custom-progress-bar",
+                  progressBar(id = "progress_1", value = 100, total = 100, display_pct = TRUE)
+              ),
+      ), 
+      tabItem(tabName = "day3",
+              selectInput("data_type_3", "Data Type", choices = list("fMRI" = list("Scene Viewing"), "Post-Scan Eye Tracking" = list("Memory Test"))),
+              selectInput("People_3", "People (1)", choices = c("Xuan")),
+              selectInput("Screening forms/CaliForm_3", "Other Forms", choices = list("Screening Forms" = list("Physical forms at Baycrest", "*Copied to Dropbox"
+), "Eye-Tracking Calibration Tracker" = list("Physical forms also at Baycrest", "*Also copied to Dropbox"))),
+              selectInput("Participants_3", "Participating cohort (2)", choices = c("Cohort 2","Cohort 3")),
+              selectInput("Location_3", "Data Location", 
+                          choices = list("Rotman Servers" = list(" /data8/olsen_lab/AtRiskFollowup on gateway/grid (172.24.4.65)
+", "/3volatile/olsen_lab/rolsen/AtRiskFollowup on VN1 (172.24.3.121)"))),
+              h4("Data Collection Progress:"),
+              div(class = "custom-progress-bar",
+                  progressBar(id = "progress_1", value = 50, total = 100, display_pct = TRUE)
+              ),
+      ), 
+      
+      tabItem(tabName = "day4",
+              selectInput("data_type_4", "Data Types (2)", choices = list("Behavioral" = list("Oddity"), "Eye-Tracking" = list("View Point"))),
+              selectInput("People_4", "People (3)", choices = c("Negar", "Lydia","Xuan")),
+              selectInput("Participants_4", "Participating Cohort (2)", choices = c("Cohort 2","Cohort 3")),
+              selectInput("Viewpoint data log_4", "Data and Subject Logs", choices = c("Google Docs")),
+              selectInput("LocationVP_4", "View Point Data Location (3)", 
+                          choices = list("Baycrest Computers" = list("Room 804 (2022)", "Room 806 (2022)"), "Local Computer"= list("Negar (2018-2020)*Published"))),
+              selectInput("LocationOdd_4", "Oddity Data Location (3)", 
+                          choices = list("Baycrest Computers" = list("Lab Laptop", "Olsen Lab Google Drive"), "Local Computer"= list("Lydia's Personal External Hardrive"))),
+              h4("Data Collection Progress:"),
+              div(class = "custom-progress-bar",
+                  progressBar(id = "progress_1", value = 100, total = 100, display_pct = TRUE)
+              ),
+      ), 
+      
+      tabItem(tabName = "day5",
+              selectInput("data_type_5", "Data Types (3)", choices = list("Behavioral" = list("NeuroPsych Battery", "MOCA"), "Saliva Sample" = list("*Sent to CAMH"), "Demographic" = list("Demo info"))),
+              selectInput("People_5", "People", choices = c("Xuan")),
+              selectInput("Participants_5", "Participating Cohort (2)", choices = c("Cohort 2","Cohort 3")),
+              selectInput("Location_5", "Data Location", 
+                          choices = list("NeuroPsych Scores" = list("Physical forms at Baycrest", "*also photocopied to Dropbox"), 
+                                         "Demographics" = list("Physical forms also at Baycrest", "*also photocopied to Dropbox"))),
+              h4("Data Collection Progress:"),
+              div(class = "custom-progress-bar",
+                  progressBar(id = "progress_1", value = 100, total = 100, display_pct = TRUE)
+              ),
+      )
+    )
+  )
+)
+
+
+# selectInput("Name", "Display", choices = list("Type" = list("task1", "task2"), "Types" = list("task1"))),
+
+# Define server logic
+server <- function(input, output) {
+  
+  # Generate data for sidebar graph
+  sidebar_data <- data.frame(
+    Task = c("Structural", "Resting State ", "Fribbles", "SV", "SV Retrieval","VP", "Oddity", "Saliva","MoCA"," Neuropsych"),
+    Participants = c(41, 42, 37, 37, 35, 47, 43, 59, 62, 60)
+  )
+  
+  # Render sidebar graph
+  output$sidebar_plot <- renderPlot({
+    ggplot(sidebar_data, aes(x = Task, y = Participants, fill = Participants)) +
+      geom_bar(stat = "identity") +
+      theme(legend.position = "none")
+  })
+  
+  
+  
+  # Code for server logic goes here
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
