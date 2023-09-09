@@ -1,0 +1,219 @@
+install.packages("DiagrammeR")
+install.packages("fontawesome")
+install.packages("shinyjs")
+install.packages("clipr")
+
+
+library(fontawesome)
+library(shiny)
+library(readxl)
+library(shinyjs)
+library(clipr)
+library(shinydashboard)
+
+# Function to find participant directories
+findParticipantDirectories <- function(participantID, data, colPrefix) {
+  directories <- data[data$Participant_ID == participantID, paste0(colPrefix, "Pathway")]
+  return(directories)
+}
+
+# UI
+ui <- dashboardPage(
+  dashboardHeader(title = "Data Tracker"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Neuroimaging Files", tabName = "neuroimaging", icon = icon("brain")),
+      menuItem("Eyetracking Data", tabName = "eyetracking", icon = icon("eye"))
+    )
+  ),
+  dashboardBody(
+    tags$head(
+      tags$style(
+        HTML("
+          body {
+            background-color: lightblue;
+          }
+          .title {
+            background-color: #4FACFE;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid white;
+          }
+        ")
+      )
+    ),
+    tabItems(
+      tabItem(
+        tabName = "neuroimaging",
+        fluidRow(
+          column(
+            width = 12,
+            div(
+              class = "title",
+              "Neuroimaging Files"
+            ),
+            useShinyjs(),
+            sidebarLayout(
+              sidebarPanel(
+                selectInput("neuroParticipantID", "Participant ID", choices = NULL),
+                verbatimTextOutput("currentNeuroPath"),
+                uiOutput("neuroPathButtons")
+              ),
+              mainPanel(
+                tableOutput("neuroFileInfoTable"),
+                uiOutput("neuroCopyPathButtons")
+              )
+            )
+          )
+        )
+      ),
+      tabItem(
+        tabName = "eyetracking",
+        fluidRow(
+          column(
+            width = 12,
+            div(
+              class = "title",
+              "Eyetracking Data"
+            ),
+            useShinyjs(),
+            sidebarLayout(
+              sidebarPanel(
+                selectInput("eyeParticipantID", "Participant ID", choices = NULL),
+                verbatimTextOutput("currentEyePath"),
+                uiOutput("eyePathButtons")
+              ),
+              mainPanel(
+                tableOutput("eyeFileInfoTable"),
+                uiOutput("eyeCopyPathButtons")
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+# Server
+server <- function(input, output, session) {
+  # Read data
+  data <- read_excel("C:/Users/samhs/OneDrive/Desktop/FileLocation7-6-23.xlsx")  # Replace with local file path, make sure the copied path is using backslash and not forward slash, also make sure the file is closed when running the code
+  
+  # Update selection for neuroimaging page
+  updateSelectInput(session, "neuroParticipantID", choices = unique(data$Participant_ID))
+  
+  # Reactive expression for neuroimaging directories
+  neuroParticipantDirectories <- reactive({
+    participantID <- input$neuroParticipantID
+    directories <- findParticipantDirectories(participantID, data, "Pathway")
+    return(directories)
+  })
+  
+  # Reactive expression for neuroimaging file information
+  neuroFileInformation <- reactive({
+    participantID <- input$neuroParticipantID
+    fileInfo <- data[data$Participant_ID == participantID, c("Participant_ID", "Type", "Size", "Transferred", "Pathway", "Collected")]
+    return(fileInfo)
+  })
+  
+  # Output neuroimaging file information table
+  output$neuroFileInfoTable <- renderTable({
+    fileInfo <- neuroFileInformation()
+    fileInfo$Size <- paste(fileInfo$Size)  # Append "bytes" to file size
+    fileInfo
+  })
+  
+  # Output neuroimaging copy path buttons
+  output$neuroCopyPathButtons <- renderUI({
+    fileInfo <- neuroFileInformation()
+    numFiles <- nrow(fileInfo)
+    
+    buttonList <- lapply(1:numFiles, function(i) {
+      buttonLabel <- paste("Copy Path", i)
+      id <- paste0("neuroCopyPathButton_", i)
+      actionButton(id, buttonLabel, class = "copyPathButton")
+    })
+    
+    do.call(tagList, buttonList)
+  })
+  
+  # Neuroimaging copy path
+  observe({
+    fileInfo <- neuroFileInformation()
+    numFiles <- nrow(fileInfo)
+    
+    lapply(1:numFiles, function(i) {
+      observeEvent(input[[paste0("neuroCopyPathButton_", i)]], {
+        path <- fileInfo$Pathway[i]
+        clipr::write_clip(path)
+      })
+    })
+  })
+  
+  # Output current neuroimaging path
+  output$currentNeuroPath <- renderPrint({
+    neuroParticipantDirectories()[1]
+  })
+  
+  # Update selection for eyetracking page
+  updateSelectInput(session, "eyeParticipantID", choices = unique(data$Participant_ID_2))
+  
+  # Reactive expression for eyetracking directories
+  eyeParticipantDirectories <- reactive({
+    participantID <- input$eyeParticipantID
+    directories <- findParticipantDirectories(participantID, data, "Pathway_2")
+    return(directories)
+  })
+  
+  # Reactive expression for eyetracking file information
+  eyeFileInformation <- reactive({
+    participantID <- input$eyeParticipantID
+    fileInfo <- data[data$Participant_ID_2 == participantID, c("Participant_ID_2", "Type_2", "Size_2", "Transferred_2", "Pathway_2", "Collected_2")]
+    return(fileInfo)
+  })
+  
+  # Output eyetracking file information table
+  output$eyeFileInfoTable <- renderTable({
+    fileInfo <- eyeFileInformation()
+    fileInfo$Size_2 <- paste(fileInfo$Size_2)  # Append "bytes" to file size
+    fileInfo
+  })
+  
+  # Output eyetracking copy path buttons
+  output$eyeCopyPathButtons <- renderUI({
+    fileInfo <- eyeFileInformation()
+    numFiles <- nrow(fileInfo)
+    
+    buttonList <- lapply(1:numFiles, function(i) {
+      buttonLabel <- paste("Copy Path", i)
+      id <- paste0("eyeCopyPathButton_", i)
+      actionButton(id, buttonLabel, class = "copyPathButton")
+    })
+    
+    do.call(tagList, buttonList)
+  })
+  
+  # Eyetracking copy path
+  observe({
+    fileInfo <- eyeFileInformation()
+    numFiles <- nrow(fileInfo)
+    
+    lapply(1:numFiles, function(i) {
+      observeEvent(input[[paste0("eyeCopyPathButton_", i)]], {
+        path <- fileInfo$Pathway_2[i]
+        clipr::write_clip(path)
+      })
+    })
+  })
+  
+  # Output current eyetracking path
+  output$currentEyePath <- renderPrint({
+    eyeParticipantDirectories()[1]
+  })
+}
+
+shinyApp(ui, server)
